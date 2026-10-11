@@ -1,0 +1,9 @@
+# Ignore Visual Studio temporary files, build results, and
+/.vs
+
+#idea
+/.idea
+*.iml
+
+# Ignore Visual Studio temporary files, build results, and
+/out
