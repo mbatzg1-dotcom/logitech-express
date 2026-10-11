@@ -1,8 +1,6 @@
 """
-Sistema de Gestión y Diagnóstico de Operaciones 'LogiTech Express' (Versión 3)
-Curso: Algoritmos - Universidad Mariano Gálvez de Guatemala
+Sistema de Gestión y Diagnóstico de Operaciones 'LogiTech Express'
 Moneda Oficial: Quetzales (Q / GTQ)
-Ajustes V3:
  - Moneda explicitada como Quetzales (Q / GTQ) en todas las salidas y diálogos.
  - Servicio Express deshabilitado para envíos Internacionales.
 """
