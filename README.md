@@ -66,8 +66,8 @@ Durante la sesión, calcular:
 - El paquete con el mayor costo.
 - La cantidad de envíos express solicitados.
 
-**Descuento corporativo:** aplicar un descuento del 10 % a las tarifas de cada paquete si el total antes del descuento supera Q1,500.00
-**o** si se procesan 10 paquetes o más.
+**Descuento corporativo:** aplicar un descuento del 10 % a las tarifas de cada paquete si el total antes del descuento
+supera Q1,500.00 **o** si se procesan 10 paquetes o más.
 
 ### Módulo 3: Diagnóstico y auditoría de eficiencia
 
@@ -77,3 +77,11 @@ indicador **SLA** (*Service Level Agreement*).
 ## Diagrama de flujo
 
 [Ver los diagramas de flujo del programa C++](logitech-c++/README.md#diagramas-de-flujo)
+
+---
+
+## Presentación del proyecto
+
+### Menú principal
+
+![menu-principal-2026-10-16 151831.png](doc/screenshot/menu-principal-2026-10-16%20151831.png)
