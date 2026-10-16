@@ -12,7 +12,7 @@ endif()
 project ("logitech-c++")
 
 # Agregue un origen al ejecutable de este proyecto.
-add_executable (logitech-c++ "logitech-c++.cpp" "logitech-c++.h")
+add_executable (logitech-c++ "main.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET logitech-c++ PROPERTY CXX_STANDARD 20)

@@ -51,7 +51,7 @@ Crear una función `calcular_tarifa()` que determine el costo total con estas re
 | Concepto         | Regla                                                        |
 |------------------|--------------------------------------------------------------|
 | Tarifa base      | Q50.00 para destino nacional; Q250.00 para internacional     |
-| Recargo por peso | Si supera las 10 lb, sumar Q50.00 por cada lb adicional      |
+| Recargo por peso | Si supera los 10 kg, sumar Q50.00 por cada kg adicional      |
 | Servicio express | Aumentar un 30 % sobre la tarifa base y el recargo acumulado |
 | Seguro opcional  | Aumentar un 5 % sobre el total calculado hasta ese momento   |
 
@@ -66,8 +66,8 @@ Durante la sesión, calcular:
 - El paquete con el mayor costo.
 - La cantidad de envíos express solicitados.
 
-**Descuento corporativo:** aplicar un descuento global del 10 % sobre el total si el monto facturado supera Q1,500.00
-**o** si se procesan más de 10 paquetes.
+**Descuento corporativo:** aplicar un descuento del 10 % a las tarifas de cada paquete si el total antes del descuento supera Q1,500.00
+**o** si se procesan 10 paquetes o más.
 
 ### Módulo 3: Diagnóstico y auditoría de eficiencia
 
@@ -76,4 +76,4 @@ indicador **SLA** (*Service Level Agreement*).
 
 ## Diagrama de flujo
 
-[Ver y editar el diagrama en Google Drive](https://drive.google.com/file/d/1PmL6obzqO3fsQzt3xqjrySLDYB3hoOaa/view?usp=sharing)
+[Ver los diagramas de flujo del programa C++](logitech-c++/README.md#diagramas-de-flujo)
