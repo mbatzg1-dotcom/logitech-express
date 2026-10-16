@@ -1,7 +1,6 @@
-// logitech-c++.cpp: define el punto de entrada de la aplicación.
-//
-
-#include "logitech-c++.h"
+// logitech-c++.cpp define el punto de entrada de la aplicación y liberias
+#include <iostream>
+#include <string>
 
 using namespace std;
 
@@ -9,58 +8,107 @@ using namespace std;
 void Menu();
 void limpiarConsola();
 
+void RegistrarPaquete(int NumeroPaquete, int id[],
+    string destino[], double peso[],
+    string tipo_servicio[], string seguro[],
+    int nuevoId, string nuevoDestino, double nuevoPeso,
+    string nuevoServicio, string nuevoSeguro);
 
 int main()
 {
-	int opcion = 0;
-	int id = 0;
-	int internacional = 0;
-	int peso = 0;
-	int express = 0;
+    // Constantes
+    const int MaximoPaquetes = 10; // cantidad maxima de paquetes a resgistar
+
+    // Variables de menu y seleccion
+	int opcion, menuOpcion, subOpcion, contador = 0;
+	string guardar;
+
+	// Variables para arreglo bidimensional de registro de paqutes
+	int id[MaximoPaquetes];
+	string destino[MaximoPaquetes];
+	double peso[MaximoPaquetes];
+	string tipo_servicio[MaximoPaquetes];
+	string seguro[MaximoPaquetes];
+
+	int id_Temporal = 0;
+	string destino_Temporal;
+	double peso_Temporal = 0;
+	string tipo_servicio_Temporal;
+	string seguro_Temporal;
 	int tarifa = 0;
-	int total = 0;
-	int opcion = 0;
-    cout << "Bienvenido al Sistema de paqueteria de LogiTech!" << endl; 
+	double total = 0;
+
     do {
     	Menu();
+        cout << "Bienvenido al Sistema de paqueteria de Logitech Express" << endl;
     	cout << "Selecciona una opcion: " << endl;
-    	cin >> opcion;
-    	switch(opcion)
+    	cin >> menuOpcion;
+    	switch(menuOpcion)
 		{
 			case 1: // Ingreso Modulo 1
 				limpiarConsola();
-				// 1. Solicitar al usuario que ingrese el ID del paquete, el peso, si es internacional o no, y si es express o no.
-				cout << "Bienvenido a Logitech Express" << endl;
-				cout << "En este programa, puede ingresar los detalles de su paquete y calcular la tarifa correspondiente." << endl;
-				cout << "Ingrese los detalles de su paquete a continuacion:" << endl;
+				cout << "Modulo 1 - Sistema de Registro y Tarificacion" << endl;
+				cout << "----------------------------------------------------" << endl;
+				cout << "Este modulo le permite ingresar los detalles de su paquete y calcular su tarifa." << endl;
 				do {
-					// Ingresar nuevo paquete
-					cout << "Ingrese 1 para ingresar un nuevo paquete, o 5 para salir y calcular la tarifa del paquete: " << endl;
-					cout << "Ingrese 5 para salir y calcular la tarifa del paquete: " << endl;
+                    cout << "Seleccione una opcion:" << endl;
+                    cout << "1- Ingresar nuevo paquete" << endl;
+                    cout << "2- Menu Principal" << endl;
 					cin >> opcion;
 					// Validar la opcion ingresada
 					if (opcion == 1) {
-						cout << "Ingrese el ID del paquete: " << endl;
-						cin >> id;
-						cout << "Ingrese el peso del paquete: " << endl;
-						cin >> peso;
-						cout << "Ingrese 1 si es internacional, 0 si no lo es: " << endl;
-						cin >> internacional;
-						cout << "Ingrese 1 si es express, 0 si no lo es: " << endl;
-						cin >> express;
-						}
-						if (opcion != 1 && opcion != 5) {
-							cout << "Opcion invalida. Por favor, ingrese 1 para ingresar un nuevo paquete, o 5 para salir y calcular la tarifa del paquete." << endl;
+					    cout << "----------------------------------------------------" << endl;
+						cout << "- Ingrese el ID del paquete: " << endl;
+						cin >> id_Temporal;
+						do {
+						    cout << "Ingrese 1 si es Internacional o 2 si es Express." << endl;
+						    cin >> subOpcion;
+						    if (subOpcion == 1)
+						    {
+								tipo_servicio_Temporal =  "Internacional";
 							}
-						
-				} while (opcion != 5);
-					cout << "Ingrese la tarifa del paquete: " << endl;
-					cin >> tarifa;
+					        else if (subOpcion == 2)
+							{
+							    tipo_servicio_Temporal =  "Express";
+							}
+						    else {
+						        cout << "- Valor incorrecto! Intente de nuevo." << endl;
+							}
+						} while(subOpcion != 1 && subOpcion != 2);
+						cout << "Ingrese el peso del paquete: " << endl;
+						cin >> peso_Temporal;
+						cout << "¿Desea guardar este presupuesto? (s/n): ";
+						cin >> guardar;
+						if (guardar == "s" || guardar == "S") {
+                            if (contador < MaximoPaquetes) {
+                                RegistrarPaquete(contador, id, destino, peso,
+                                            tipo_servicio, seguro, id_Temporal,
+                                            destino_Temporal, peso_Temporal,
+                                            tipo_servicio_Temporal, seguro_Temporal);
+                                contador++;
+                                cout << "Presupuesto guardado." << endl;
+                            }
+                            else {
+                                cout << "No hay espacio para registrar mas paquetes." << endl;
+                            }
+						}
+						cout << "Ingrese el destino del paquete: " << endl;
+						cin >> destino_Temporal;
+						cout << "¿Desea contratar seguro? (s/n): " << endl;
+						cin >> seguro_Temporal;
+					}
+					else if (opcion != 1 && opcion != 2) {
+						cout << "Opcion invalida! Intente de nuevo." << endl;
+					}
+				} while (opcion != 2);
+				cout << "Ingrese la tarifa del paquete: " << endl;
+				cin >> tarifa;
+				limpiarConsola();
 				break;
 			case 2: // Ingreso Modulo 2
 				limpiarConsola();
 				break;
-			case 3: // Ingreso Modulo3
+			case 3: // Ingreso Modulo 3
 				limpiarConsola();
 				break;
 			case 4: // Salida del sistema
@@ -69,24 +117,37 @@ int main()
                 break;
 			default:
 				limpiarConsola();
-				cout << "Selecciona una opcion valida" << endl;
+				cout << "-! Selecciona una opcion valida" << endl;
 				break;
-		} 
-	} while (opcion != 4);
+		}
+	} while (menuOpcion != 4);
 	return 0;
 }
 
 // Definiciones de funciones
 void Menu() {
-	cout <<"----------------------------------------------------" << endl;
+	cout << "----------------------------------------------------" << endl;
 	cout << "1- Registrar y Consultar tarifas" << endl;
 	cout << "2- Revision de lotes y estadisticas" << endl;
 	cout << "3- Auditoria y Diagnostico de eficiencia" << endl;
 	cout << "4- Salir del sistema" << endl;
-	cout <<"----------------------------------------------------" << endl;
+	cout << "----------------------------------------------------" << endl;
 }
 
 void limpiarConsola() {
     // Código ANSI para borrar la pantalla y mover el cursor al inicio
     cout << "\033[2J\033[1;1H";
+}
+
+void RegistrarPaquete(int NumeroPaquete, int id[], string destino[],
+    double peso[], string tipo_servicio[], string seguro[],
+    int nuevoId, string nuevoDestino, double nuevoPeso,
+    string nuevoServicio, string nuevoSeguro)
+{
+    // Registrando datos en arreglo bidimensional
+    id[NumeroPaquete] = nuevoId;
+    destino[NumeroPaquete] = nuevoDestino;
+    peso[NumeroPaquete] = nuevoPeso;
+    tipo_servicio[NumeroPaquete] = nuevoServicio;
+    seguro[NumeroPaquete] = nuevoSeguro;
 }
