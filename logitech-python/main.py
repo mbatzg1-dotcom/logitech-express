@@ -1,192 +1,200 @@
-# Herramientas estándar y funciones de las capas de datos y negocio.
-from datetime import date
-import csv
-
-from app.database.connection import (
-    crear_archivo_envios,
-    guardar_envio,
-    listar_envios,
-    buscar_envios,
-    obtener_estadisticas,
-)
-
-from app.services.auditoria import generar_informe_auditoria
-from app.services.procesamiento_lotes import procesar_lote
-from app.services.tarificacion import calcular_tarifa_envio, validar_paquete
+# Matriz de envíos cargada al iniciar. Cada fila contiene los campos del paquete.
+matriz_envios = []
 
 
-# Solicita los datos del paquete en consola y los devuelve en un diccionario.
+# Solicita los datos de un envío, convierte las opciones del menú y valida
+# que los campos sean correctos y que el ID todavía no exista.
 def pedir_paquete():
-    paquete = {}
-    paquete["paquete_id"] = input("ID del paquete: ").strip()
-    print("Destino: 1) Nacional  2) Internacional")
-    destino = input("Seleccione destino: ").strip()
-    if destino == "1":
-        paquete["destino"] = "Nacional"
-    elif destino == "2":
-        paquete["destino"] = "Internacional"
-    else:
-        paquete["destino"] = destino
+    while True:
+        print("\nIngrese los datos del envío:")
+        paquete_id = input("ID del paquete: ").strip()
 
-    paquete["peso_kg"] = input("Peso en kilogramos: ").strip()
-    print("Servicio: 1) Estandar  2) Express")
-    servicio = input("Seleccione servicio: ").strip()
-    if servicio == "1":
-        paquete["servicio"] = "Estandar"
-    elif servicio == "2":
-        paquete["servicio"] = "Express"
-    else:
-        paquete["servicio"] = servicio
+        print("Destino: 1) Nacional  2) Internacional")
+        opcion_destino = input("Seleccione destino: ").strip()
+        if opcion_destino == "1":
+            destino = "Nacional"
+        elif opcion_destino == "2":
+            destino = "Internacional"
+        else:
+            destino = opcion_destino
 
-    seguro = input("¿Requiere seguro? (s/n): ").strip().lower()
-    paquete["requiere_seguro"] = seguro in ("s", "si", "sí", "1")
-    paquete["fecha_registro"] = date.today().isoformat()
-    return paquete
+        peso = input("Peso en kilogramos: ").strip()
+
+        print("Servicio: 1) Estandar  2) Express")
+        opcion_servicio = input("Seleccione servicio: ").strip()
+        if opcion_servicio == "1":
+            servicio = "Estandar"
+        elif opcion_servicio == "2":
+            servicio = "Express"
+        else:
+            servicio = opcion_servicio
+
+        seguro = input("¿Requiere seguro? (s/n): ").strip().lower()
+        requiere_seguro = seguro == "s" or seguro == "si" or seguro == "sí"
+
+        paquete = [
+            paquete_id,
+            destino,
+            peso,
+            servicio,
+            requiere_seguro,
+            date.today().isoformat(),
+            0.0,
+        ]
+
+        try:
+            paquete = validar_paquete(paquete)
+            for fila in matriz_envios:
+                if fila[ID] == paquete[ID]:
+                    raise ValueError("Ya existe un envío con ese ID.")
+            return paquete
+        except ValueError as error:
+            print("Formulario inválido:", error)
+            print("Vuelva a ingresar los datos.\n")
 
 
-# Valida, calcula y guarda un envío ingresado individualmente.
+# Calcula la tarifa del envío validado y lo guarda tanto en la matriz en memoria
+# como en el archivo CSV. Informa si el ID ya estaba registrado.
 def registrar_envio():
     print("\n--- Registrar envío ---")
     paquete = pedir_paquete()
+    paquete[TARIFA] = calcular_tarifa_envio(paquete)
     try:
-        paquete = validar_paquete(paquete)
-        paquete["tarifa_final"] = float(calcular_tarifa_envio(paquete))
-        if guardar_envio(paquete):
-            print("Envío guardado. Tarifa: Q{:.2f}".format(paquete["tarifa_final"]))
+        if guardar_envio(matriz_envios, paquete):
+            print("Envío guardado. Tarifa: Q{:.2f}".format(paquete[TARIFA]))
         else:
-            print("Error: ya existe un paquete con ese ID.")
-    except ValueError as error:
-        print("Datos inválidos:", error)
+            print("No se guardó: ya existe un envío con ese ID.")
     except (OSError, csv.Error) as error:
         print("No se pudo guardar el envío:", error)
 
 
-# Imprime los envíos en formato de tabla para facilitar su lectura.
+# Imprime las filas recibidas en forma de tabla para que el historial sea legible.
 def mostrar_envios(envios):
     if not envios:
         print("No hay envíos que mostrar.")
         return
+
     print("\n{:<16} {:<12} {:<16} {:>10} {:<12} {:<8} {:>12}".format(
         "ID", "Fecha", "Destino", "Peso (kg)", "Servicio", "Seguro", "Tarifa"
     ))
     print("-" * 92)
     for envio in envios:
-        seguro = "Sí" if envio["requiere_seguro"] else "No"
+        if envio[SEGURO]:
+            seguro = "Sí"
+        else:
+            seguro = "No"
         print("{:<16} {:<12} {:<16} {:>10.2f} {:<12} {:<8} Q{:>10.2f}".format(
-            envio["paquete_id"],
-            envio["fecha_registro"],
-            envio["destino"],
-            float(envio["peso_kg"]),
-            envio["servicio"],
+            envio[ID],
+            envio[FECHA],
+            envio[DESTINO],
+            float(envio[PESO_KG]),
+            envio[SERVICIO],
             seguro,
-            float(envio["tarifa_final"]),
+            float(envio[TARIFA]),
         ))
 
 
-# Pide filtros y muestra los registros encontrados en el archivo CSV.
+# Solicita filtros opcionales de ID, destino y servicio, y muestra las coincidencias.
 def ver_historial():
     print("\n--- Historial de envíos ---")
     texto_id = input("Filtrar por ID (Enter para todos): ").strip()
-    destino = input("Destino (Enter para todos): ").strip()
-    servicio = input("Servicio (Enter para todos): ").strip()
-    if destino not in ("Nacional", "Internacional"):
+    destino = input("Destino (Nacional/Internacional o Enter): ").strip()
+    servicio = input("Servicio (Estandar/Express o Enter): ").strip()
+
+    if destino != "Nacional" and destino != "Internacional":
         destino = ""
-    if servicio not in ("Estandar", "Express"):
+    if servicio != "Estandar" and servicio != "Express":
         servicio = ""
-    try:
-        mostrar_envios(buscar_envios(texto_id, destino, servicio))
-    except (OSError, csv.Error, ValueError) as error:
-        print("No se pudo consultar el historial:", error)
+
+    mostrar_envios(buscar_envios(matriz_envios, texto_id, destino, servicio))
 
 
-# Lee varias líneas, calcula las tarifas y permite guardar los registros válidos.
+# Recibe varias filas en formato separado por punto y coma, calcula cada tarifa,
+# muestra válidos e inválidos y pregunta si se deben guardar los válidos.
 def procesar_lote_terminal():
     print("\n--- Procesar lote ---")
-    print("Ingrese datos separados por punto y coma:")
-    print("ID;destino;kg;servicio;seguro(s/n). Línea vacía para terminar.")
+    print("Formato por línea: ID;destino;kg;servicio;seguro(s/n)")
+    print("Ejemplo: ENV-01;Nacional;3;Estandar;no")
+    print("Presione Enter en una línea vacía para terminar.")
+
     paquetes = []
     while True:
         linea = input("> ").strip()
-        if not linea:
+        if linea == "":
             break
+
         partes = linea.split(";")
         if len(partes) != 5:
-            paquetes.append({})
-            continue
-        paquetes.append({
-            "paquete_id": partes[0].strip(),
-            "destino": partes[1].strip(),
-            "peso_kg": partes[2].strip(),
-            "servicio": partes[3].strip(),
-            "requiere_seguro": partes[4].strip().lower() in ("s", "si", "sí", "1"),
-        })
+            paquetes.append([])
+        else:
+            seguro = partes[4].strip().lower()
+            requiere_seguro = seguro == "s" or seguro == "si" or seguro == "sí"
+            paquetes.append([
+                partes[0].strip(),
+                partes[1].strip(),
+                partes[2].strip(),
+                partes[3].strip(),
+                requiere_seguro,
+                date.today().isoformat(),
+                0.0,
+            ])
 
-    resultado = procesar_lote(paquetes)
-    print("\nEnvíos calculados:", resultado["total_envios"])
-    print("Ingresos: Q{:.2f}".format(resultado["ingresos_totales"]))
-    print("Tarifa promedio: Q{:.2f}".format(resultado["tarifa_promedio"]))
-    print("Nacionales: {} | Internacionales: {}".format(
-        resultado["nacionales"], resultado["internacionales"]
-    ))
-    for envio in resultado["registros_validos"]:
-        print("{}: Q{:.2f}".format(envio["paquete_id"], envio["tarifa_final"]))
+    validos, invalidos, estadisticas = procesar_lote(paquetes)
+    print("\nEnvíos válidos:", estadisticas[0])
+    print("Ingresos: Q{:.2f}".format(estadisticas[1]))
+    print("Promedio: Q{:.2f}".format(estadisticas[2]))
+    print("Nacionales: {} | Internacionales: {}".format(estadisticas[3], estadisticas[4]))
 
-    for invalido in resultado["registros_invalidos"]:
-        print("Línea {} inválida: {}".format(invalido["indice"], invalido["error"]))
+    for envio in validos:
+        print("{}: Q{:.2f}".format(envio[ID], envio[TARIFA]))
+    for invalido in invalidos:
+        print("Línea {} inválida: {}".format(invalido[0], invalido[1]))
 
-    if input("¿Guardar los envíos válidos? (s/n): ").strip().lower() in ("s", "si", "sí"):
+    respuesta = input("¿Guardar los envíos válidos? (s/n): ").strip().lower()
+    if respuesta == "s" or respuesta == "si" or respuesta == "sí":
         guardados = 0
-        for envio in resultado["registros_validos"]:
-            envio["fecha_registro"] = date.today().isoformat()
-            try:
-                if guardar_envio(envio):
-                    guardados += 1
-                else:
-                    print("ID duplicado, no guardado:", envio["paquete_id"])
-            except (OSError, csv.Error) as error:
-                print("Error al guardar {}: {}".format(envio["paquete_id"], error))
+        for envio in validos:
+            if guardar_envio(matriz_envios, envio):
+                guardados = guardados + 1
+            else:
+                print("ID duplicado, no guardado:", envio[ID])
         print("Envíos guardados:", guardados)
 
 
-# Compara las tarifas almacenadas con el cálculo actual y reporta diferencias.
+# Compara cada tarifa almacenada con la tarifa actual y muestra diferencias;
+# esta operación solo informa y no modifica la matriz.
 def auditar_envios():
     print("\n--- Auditoría ---")
-    try:
-        informe = generar_informe_auditoria(listar_envios())
-        print(informe["informe"])
-        if informe["diferencias"]:
-            for diferencia in informe["diferencias"]:
-                print(diferencia)
-        estadisticas = obtener_estadisticas()
-        total = estadisticas["total_envios"]
-        if total:
-            eficiencia = informe["correctos"] * 100 / total
-        else:
-            eficiencia = 0
-        print("Eficiencia de tarifas: {:.1f}%".format(eficiencia))
-    except (OSError, csv.Error, ValueError) as error:
-        print("No se pudo completar la auditoría:", error)
+    total, correctos, incorrectos, diferencias, informe = generar_informe_auditoria(matriz_envios)
+    print(informe)
+    for diferencia in diferencias:
+        print(diferencia)
+
+    if total == 0:
+        eficiencia = 0
+    else:
+        eficiencia = correctos * 100 / total
+    print("Eficiencia de tarifas: {:.1f}%".format(eficiencia))
 
 
-# Muestra cantidades e ingresos acumulados que se obtienen de la base de datos.
+# Calcula y presenta el conteo de envíos, ingresos, promedio y distribuciones.
 def mostrar_resumen():
-    try:
-        datos = obtener_estadisticas()
-        print("\n--- Resumen ---")
-        print("Envíos: {}".format(datos["total_envios"]))
-        print("Ingresos: Q{:.2f}".format(datos["ingresos_totales"]))
-        print("Promedio: Q{:.2f}".format(datos["tarifa_promedio"]))
-        print("Nacionales: {} | Internacionales: {}".format(
-            datos["nacionales"], datos["internacionales"]
-        ))
-        print("Estándar: {} | Express: {}".format(datos["estandar"], datos["express"]))
-    except (OSError, csv.Error, ValueError) as error:
-        print("No se pudo obtener el resumen:", error)
+    datos = obtener_estadisticas(matriz_envios)
+    print("\n--- Resumen ---")
+    print("Envíos: {}".format(datos[0]))
+    print("Ingresos: Q{:.2f}".format(datos[1]))
+    print("Promedio: Q{:.2f}".format(datos[2]))
+    print("Nacionales: {} | Internacionales: {}".format(datos[3], datos[4]))
+    print("Estandar: {} | Express: {}".format(datos[5], datos[6]))
 
 
-# Inicializa la base y mantiene el menú hasta que el usuario elija salir.
+# Prepara el archivo, carga sus filas en la matriz y repite el menú hasta que
+# el usuario elija salir.
 def ejecutar_menu():
+    global matriz_envios
     crear_archivo_envios()
+    matriz_envios = cargar_envios()
+
     while True:
         print("\n=== SISTEMA DE ENVÍOS ===")
         print("1. Registrar envío")
@@ -214,6 +222,6 @@ def ejecutar_menu():
             print("Opción inválida. Seleccione una opción del menú.")
 
 
-# Este bloque inicia el programa solamente cuando se ejecuta main.py directamente.
+# Ejecuta el menú solo cuando se inicia este archivo directamente.
 if __name__ == "__main__":
     ejecutar_menu()
