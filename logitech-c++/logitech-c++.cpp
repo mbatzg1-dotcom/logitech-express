@@ -7,10 +7,10 @@ using namespace std;
 void Menu();
 void limpiarConsola();
 
-void RegistrarPaquete(int NumeroPaquete, int id[],
+void RegistrarPaquete(int NumeroPaquete, string id[],
     string destino[], double peso[],
     string tipo_servicio[], string seguro[], double tarifaBase [], double total[],
-    int nuevoId, string nuevoDestino, double nuevoPeso,
+    string nuevoId, string nuevoDestino, double nuevoPeso,
     string nuevoServicio, string nuevoSeguro, double nuevoTarifaBase, double nuevoTotal);
 
 int main()
@@ -23,7 +23,7 @@ int main()
 	string guardar, SubOpcion_String = "";
 
 	// Variables para arreglo bidimensional de registro de paqutes
-	int id[MaximoPaquetes];
+	string id[MaximoPaquetes];
 	string destino[MaximoPaquetes];
 	double peso[MaximoPaquetes];
 	string tipo_servicio[MaximoPaquetes];
@@ -31,7 +31,7 @@ int main()
 	double tarifaBase[MaximoPaquetes];
 	double total[MaximoPaquetes];
 
-	int id_Temporal = 0;
+	string id_Temporal = "";
 	string destino_Temporal = "";
 	double peso_Temporal = 0.0;
 	string tipo_servicio_Temporal = "";
@@ -52,6 +52,9 @@ int main()
 			case 1: // Ingreso Modulo 1
 				limpiarConsola();
 				do {
+				    if (contador >= MaximoPaquetes) {
+						cout << "NOTA: No hay espacio para registrar mas paquetes!" << endl;
+					}
                     cout << "Modulo 1 - Sistema de Registro y Tarificacion" << endl;
                     cout << "----------------------------------------------------" << endl;
                     cout << "Este modulo le permite ingresar los detalles de su paquete y calcular su tarifa." << endl;
@@ -64,7 +67,7 @@ int main()
 					// Validar la opcion ingresada
 					if (opcion == 1) {
 					    cout << "----------------------------------------------------" << endl;
-						cout << "- Ingrese el ID del paquete: " << endl;
+						cout << "- Ingrese el ID del paquete: ";
 						cin >> id_Temporal;
 						do {
 						    cout << "Ingrese el destino: " << endl;
@@ -86,8 +89,10 @@ int main()
 							}
 						} while(subOpcion != 1 && subOpcion != 2);
 
+						Recargos = 0.0; // Backup para que los valores esten a 0
+
 						do {
-						    cout << "Ingrese el peso del paquete (lbs) : " << endl;
+						    cout << "Ingrese el peso del paquete (lbs) : ";
 							cin >> peso_Temporal;
 							if (peso_Temporal > 10) {
 							    // Si Peso supera 10 lb entonces + Q50.00 por cada libra adicional
@@ -96,7 +101,7 @@ int main()
 						} while (peso_Temporal <= 0);
 
 						do {
-						    cout << "Ingrese el tipo de servicio: " << endl;
+						    cout << "Ingrese el tipo de servicio : " << endl;
 							cout << "1 - Estandar" << endl;
 							cout << "2 - Express" << endl;
 						    cin >> subOpcion;
@@ -117,7 +122,7 @@ int main()
 						} while(subOpcion != 1 && subOpcion != 2);
 
 						do {
-						    cout << "Desea contratar seguro? (s/n): " << endl;
+						    cout << "Desea contratar seguro? (s/n) : ";
 							cin >> SubOpcion_String;
 							if (SubOpcion_String == "s" || SubOpcion_String == "S") {
 							    seguro_Temporal = "Con Seguro";
@@ -161,7 +166,7 @@ int main()
                             }
 						}
 						// Reiniciando varibales temporales
-						id_Temporal = 0;
+						id_Temporal = "";
 						destino_Temporal = "";
 						peso_Temporal = 0.0;
 						tipo_servicio_Temporal = "";
@@ -215,9 +220,9 @@ void limpiarConsola() {
     cout << "\033[2J\033[1;1H";
 }
 
-void RegistrarPaquete(int NumeroPaquete, int id[], string destino[],
+void RegistrarPaquete(int NumeroPaquete, string id[], string destino[],
     double peso[], string tipo_servicio[], string seguro[], double tarifaBase[], double total[],
-    int nuevoId, string nuevoDestino, double nuevoPeso,
+    string nuevoId, string nuevoDestino, double nuevoPeso,
     string nuevoServicio, string nuevoSeguro, double nuevoTarifaBase, double nuevoTotal)
 {
     // Registrando datos en arreglos undimensionales
